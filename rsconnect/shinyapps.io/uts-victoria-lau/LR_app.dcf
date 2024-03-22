@@ -1,0 +1,12 @@
+name: LR_app
+title: LR_app
+username: uts-victoria-lau
+account: uts-victoria-lau
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10315142
+bundleId: 8178693
+url: https://uts-victoria-lau.shinyapps.io/LR_app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

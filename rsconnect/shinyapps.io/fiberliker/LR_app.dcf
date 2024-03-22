@@ -1,0 +1,12 @@
+name: LR_app
+title: LR_app
+username: fiberliker
+account: fiberliker
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10328999
+bundleId: 7879850
+url: https://fiberliker.shinyapps.io/LR_app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

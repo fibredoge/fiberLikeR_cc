@@ -1,0 +1,5 @@
+step;text
+1;Read the main scenario and select a sub-scenario version (A / B / C) to evaluate.
+2;1) Enter case details & examination results. Formulate and enter your activity-level propositions. The system will provide a LR formula based on your input.
+3;2) By default, system-derived values are used for calculating LR, but you can review and modify the values for each term: 1) Click 'enter own' and enter value in text box. 2) Confirm by clicking 'Update' button.
+4;Download summary HTML or PDF document

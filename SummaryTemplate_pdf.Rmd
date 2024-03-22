@@ -1,0 +1,208 @@
+---
+title: Summary Document
+subtitle: "Report generated: `r format(Sys.time(), '%a/%d/%b %Y')`"
+output: pdf_document
+always_allow_html: true
+params:
+  case_notes: default
+  activity: default
+  control_substrate: default
+  control_shape: default
+  control_shed: default
+  fibre_type: default
+  fibre_colour: default
+  transfer_direction: default
+  n_fibres: 1000
+  recipient_substrate: default
+  recipient_shape: default
+  recipient_retain: default
+  Hp: default
+  Hd: default
+  alternative_transfer: true
+  source_is_x: true
+  chosen_scene: default
+  LR_formula: default
+  tn_assumption: true
+  tdn_assumption: true
+  system_parameters_all: !r list()
+  system_parameters: !r list()
+  system_calculation: 0
+  user_parameters: !r list()
+  user_calculation: 0
+  dataset: !r data.frame()
+
+---
+
+# 1. Set up
+
+On Saturday 21st March, Joe Citizen attended a major social function at a prime licensed venue. Shortly after arriving, he exited the venue to retrieve something from his car when he was tackled and assaulted by a man wearing a red hoody. Security and police quickly attended the scene. A few hours later, a man matching the description, Max Mustermann, was taken into custody and his garments including a red hoody and brown chinos were collected. Joe also submitted his yellow Minions T-shirt for examination.
+
+As the forensic scientist tasked with performing analyses and interpreting findings relating to this case, you have recovered a number of foreign fibres from Joes T-shirt.
+
+## Case details
+
+User-entered case notes: `r params$case_notes`
+
+Nature of incident: `r params$activity`
+
+Control substrate: `r params$control_substrate`
+
+Control shape: `r params$control_shape`
+
+Control shed: `r params$control_shed`
+
+## Trace details
+
+Blurb about trace details.
+
+Fibre type: `r params$fibre_type`
+
+Fibre colour: `r params$fibre_colour`
+
+Direction of transfer: `r params$transfer_direction`
+
+Number of fibres: `r params$n_fibres`
+
+
+## Recipient properties
+
+Recipient substrate: `r params$recipient_substrate`
+
+Recipient shape: `r params$recipient_shape`
+
+Recipient retain: `r params$recipient_retain`
+
+## Activity level propositions
+
+Hp: `r params$Hp`
+
+Hd: `r params$Hd`
+  
+Alternative transfer event: `r params$alternative_transfer`
+
+Source is X: `r params$source_is_x`
+
+## Scene C assumptions
+
+Assume tn >> t0: `r params$tn_assumption`
+Assume tdn >> t0: `r params$tdn_assumption`
+
+## Bayes factor
+
+Formula: `r params$LR_formula`
+
+
+# 2. Results
+
+## System values
+
+System parameters: `r params$system_parameters`
+System-calculated LR: `r params$system_calculation`
+
+## User values
+
+User parameters in a list:
+
+```{r echo = FALSE}
+parameter_list <- ""
+
+for (param in names(params$user_parameters)) {
+  parameter_list <- paste0(parameter_list, param, ": ", params$user_parameters[[param]], "<br>")
+}
+```
+
+`r parameter_list`
+
+User parameters in a table:
+
+```{r echo=FALSE}
+library(knitr)
+parameter_table <- data.frame(params$user_parameters)
+
+kable(parameter_table)
+```
+
+
+User-calculated LR: `r params$user_calculation`
+
+## Sensitivity to inputs
+
+```{r}
+calculate_LR <- function(calc_params, chosen_scene) {
+  with(calc_params,
+       if (chosen_scene == "A") {
+         (b0 * tn) / (bn * gamma)
+       } else if (chosen_scene == "B") {
+         (b0 * tn) / (b0 * gamma * tdn)
+       } else if (chosen_scene == "C") {
+         (b0 * tn + bn * gamma * t0) / (b0 * tdn + bn * gamma * td0)
+       } else if (chosen_scene == "C1") {
+         (b0 * tn) / (b0 * tdn + bn * gamma * td0)
+       } else if (chosen_scene == "C2") {
+         tn / tdn
+       }
+  )
+}
+```
+
+```{r echo = FALSE}
+nfibres_range <- seq(from = 201, to = 3000, by = 1)
+
+tn_range <- params$dataset$mean.prob[params$dataset$no.fibres == nfibres_range]
+
+calc_params_system <- params$system_parameters_all
+calc_params_user <- params$user_parameters
+
+for (param in names(calc_params_system)) {
+  if (!param %in% names(calc_params_user)) {
+    calc_params_user[[param]] <- calc_params_system[[param]]
+  }
+}
+
+calc_params_user$tn <- tn_range
+calc_params_system$tn <- tn_range
+
+svty_df <- data.frame()
+
+for (chosen_scene in c("A", "B", "C", "C1", "C2")) {
+  
+  LR_user_svty <- calculate_LR(calc_params_user, chosen_scene)
+  LR_system_svty <- calculate_LR(calc_params_system, chosen_scene)
+  
+  svty_df <- bind_rows(data.frame(nfibres = nfibres_range, tn = tn_range, 
+                                  LR = LR_user_svty, params = "User", scene = chosen_scene),
+                       data.frame(nfibres = nfibres_range, tn = tn_range, 
+                                  LR = LR_system_svty, params = "System", scene = chosen_scene),
+                       svty_df)
+}
+
+
+ggp <- ggplot(data = svty_df, mapping = aes(x = nfibres, y = LR, color = scene, linetype = params)) +
+  geom_line() +
+  labs(x = "Number of fibres", y = "LR", color = "Scene", linetype = "System/User")
+
+plot(ggp)
+
+svty_df %>%
+      plot_ly(x = ~nfibres,
+              y = ~LR,
+              color = ~scene,
+              linetype = ~params,
+              colors = "Accent",
+              type = "scatter",
+              mode = "lines") %>%
+      plotly::layout(
+        title = "",
+        xaxis = list(
+          title = "Number of fibres"
+        ),
+        yaxis = list(
+          title = "LR"
+        ),
+        margin = list(
+          t = 40
+        ),
+        autosize = TRUE
+      )
+```
+
